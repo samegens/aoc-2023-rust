@@ -20,6 +20,7 @@ fn solve_part2(lines: Lines) -> u32 {
         .sum()
 }
 
+/// Get the calibration value from a line as described in Part 1.
 fn get_calibration_value(line: &str) -> u8 {
     let first_pos: Option<usize> = line.find(|c: char| c.is_digit(10));
     let last_pos: Option<usize> = line.rfind(|c: char| c.is_digit(10));
@@ -35,28 +36,39 @@ fn get_digit_value_within_string(line: &str, index: usize) -> u8 {
     line.as_bytes()[index] - '0' as u8
 }
 
+/// Get the real calibration value from a line as described in Part 2.
 fn get_real_calibration_value(line: &str) -> u8 {
-    let words: [&str; 9] = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
-
     let mut values: Vec<u8> = Vec::new();
-    for i in 0..line.len() {
-        if line.chars().nth(i).unwrap().is_digit(10) {
-            values.push(line.bytes().nth(i).unwrap() - '0' as u8);
-        }
 
-        for word_index in 0..words.len() {
-            let word = words[word_index];
-            if line[i..].starts_with(word) {
-                values.push((word_index + 1) as u8);
-            }
+    for i in 0..line.len() {
+        let maybe_digit: Option<u8> = get_digit_for_index(line, i);
+        if let Some(digit) = maybe_digit {
+            values.push(digit);
         }
     }
 
-    if values.len() == 0 {
+    if values.is_empty() {
         return 0;
     }
 
     values.first().unwrap() * 10 + values.last().unwrap()
+}
+
+fn get_digit_for_index(line: &str, index: usize) -> Option<u8> {
+    let words: [&str; 9] = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+
+    if line.chars().nth(index)?.is_digit(10) {
+        return Some(line.chars().nth(index)?.to_digit(10)? as u8);
+    }
+
+    for word_index in 0..words.len() {
+        let word = words[word_index];
+        if line[index..].starts_with(word) {
+            return Some((word_index + 1) as u8);
+        }
+    }
+
+    None
 }
 
 #[cfg(test)]
