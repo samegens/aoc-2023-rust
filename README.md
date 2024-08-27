@@ -1,6 +1,7 @@
 # Advent of Code 2023 solutions in Rust
 
-This repo is my first code using [Rust](https://www.rust-lang.org/), to solve the problems
+This repo is my first code using [Rust](https://www.rust-lang.org/), 
+to solve some of the problems
 of [Advent of Code 2023](https://adventofcode.com/2023/).
 
 What I tried to learn:
