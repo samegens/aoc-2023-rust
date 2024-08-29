@@ -5,6 +5,22 @@ use crate::cube_color::CubeColor;
 pub struct GameSet(HashMap<CubeColor, i32>);
 
 impl GameSet {
+    pub(crate) fn is_possible_part1(&self) -> bool {
+        if self.0.contains_key(&CubeColor::Red) && self.0[&CubeColor::Red] > 12 {
+            return false;
+        }
+        if self.0.contains_key(&CubeColor::Green) && self.0[&CubeColor::Green] > 13 {
+            return false;
+        }
+        if self.0.contains_key(&CubeColor::Blue) && self.0[&CubeColor::Blue] > 14 {
+            return false;
+        }
+
+        true
+    }
+}
+
+impl GameSet {
     pub fn new() -> Self {
         GameSet(HashMap::new())
     }
