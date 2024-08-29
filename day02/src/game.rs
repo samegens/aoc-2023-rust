@@ -1,3 +1,4 @@
+use crate::cube_color::CubeColor;
 use crate::game_set::GameSet;
 
 #[derive(Debug, PartialEq)]
@@ -15,6 +16,8 @@ pub struct Game {
 }
 
 impl Game {
+
+    #[cfg(test)]
     pub fn new(id: GameId) -> Self {
         Game {
             id,
@@ -26,6 +29,7 @@ impl Game {
         &self.id
     }
 
+    #[cfg(test)]
     pub(crate) fn add(&mut self, game_set: GameSet) {
         self.game_sets.push(game_set);
     }
@@ -57,6 +61,18 @@ impl Game {
         }
 
         true
+    }
+
+    pub fn power(&self) -> u32 {
+        let colors: Vec<CubeColor> = vec![
+            CubeColor::Red, CubeColor::Green, CubeColor::Blue
+        ];
+        colors
+            .iter()
+            .map(|color| self.game_sets.iter()
+                .map(|game_set| game_set.get_nr_cubes(color))
+                .max().unwrap())
+            .fold(1, |acc, max| acc * max)
     }
 }
 
@@ -96,6 +112,20 @@ mod tests {
 
         // Act
         let actual: bool = game.is_possible_part1();
+
+        // Assert
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_power() {
+        // Arrange
+        let game_text = "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green";
+        let game = Game::parse(game_text);
+        let expected: u32 = 48;
+
+        // Act
+        let actual: u32 = game.power();
 
         // Assert
         assert_eq!(actual, expected);

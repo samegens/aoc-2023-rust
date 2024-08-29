@@ -2,7 +2,13 @@ use std::collections::HashMap;
 use crate::cube_color::CubeColor;
 
 #[derive(Debug, PartialEq)]
-pub struct GameSet(HashMap<CubeColor, i32>);
+pub struct GameSet(HashMap<CubeColor, u32>);
+
+impl GameSet {
+    pub(crate) fn get_nr_cubes(&self, color: &CubeColor) -> u32 {
+        *(self.0.get(color).unwrap_or(&0))
+    }
+}
 
 impl GameSet {
     pub(crate) fn is_possible_part1(&self) -> bool {
@@ -21,17 +27,19 @@ impl GameSet {
 }
 
 impl GameSet {
+
+    #[cfg(test)]
     pub fn new() -> Self {
         GameSet(HashMap::new())
     }
 
     pub fn parse(game_set_text: &str) -> Self {
         let parts: Vec<&str> = game_set_text.split(',').collect();
-        let mut map: HashMap<CubeColor, i32> = HashMap::new();
+        let mut map: HashMap<CubeColor, u32> = HashMap::new();
         for part in parts {
             let sub_parts: Vec<&str> = part.split_whitespace().collect();
             let color = sub_parts[1].parse::<CubeColor>().unwrap();
-            let amount: i32 = sub_parts[0].parse::<i32>().unwrap();
+            let amount: u32 = sub_parts[0].parse::<u32>().unwrap();
 
             map.insert(color, amount);
         }
@@ -39,7 +47,8 @@ impl GameSet {
         GameSet(map)
     }
 
-    pub fn insert(&mut self, key: CubeColor, amount: i32) {
+    #[cfg(test)]
+    pub fn insert(&mut self, key: CubeColor, amount: u32) {
         self.0.insert(key, amount);
     }
 }
