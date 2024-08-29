@@ -2,10 +2,11 @@
 members = [
    'day01',
    "day02",
+   "day03",
    'common',
 ]
 
-# Prevent warning
+# Prevent warning:
 # virtual workspace defaulting to `resolver = "1"` despite one or more workspace members being on edition 2021
 # which implies `resolver = "2"`
 resolver = "2"
