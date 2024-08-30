@@ -9,7 +9,7 @@ use common::InputReader;
 use std::str::{Lines};
 
 fn main() {
-    let input_reader: InputReader = common::create_input_reader(2);
+    let input_reader: InputReader = InputReader::new(2);
     println!("Part 1: {}", solve_part1(input_reader.lines()));
     println!("Part 2: {}", solve_part2(input_reader.lines()));
 }

@@ -3,7 +3,7 @@ use common;
 use common::InputReader;
 
 fn main() {
-    let input_reader: InputReader = common::create_input_reader(1);
+    let input_reader: InputReader = InputReader::new(1);
     println!("Part 1: {}", solve_part1(input_reader.lines()));
     println!("Part 2: {}", solve_part2(input_reader.lines()));
 }
