@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]
 pub struct Point {
     pub x: i64,
     pub y: i64,
@@ -21,6 +21,46 @@ impl Point {
 
     pub fn manhattan_distance(&self, other: &Point) -> u64 {
         (self.x - other.x).unsigned_abs() + (self.y - other.y).unsigned_abs()
+    }
+
+    /// Returns an iterator over the surrounding points of this point.
+    pub fn adjacent_points(&self) -> AdjacentPoints {
+        AdjacentPoints {
+            center: self,
+            index: 0,
+        }
+    }
+}
+
+/// Custom iterator to iterate over the adjacent points of a Point.
+pub struct AdjacentPoints<'a> {
+    center: &'a Point,
+    index: usize,
+}
+
+impl<'a> Iterator for AdjacentPoints<'a> {
+    type Item = Point;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        // Define all 8 possible offsets around a point in clockwise order
+        let offsets = [
+            (-1, -1), // Top-left
+            (0, -1),  // Top
+            (1, -1),  // Top-right
+            (-1, 0),  // Left
+            (1, 0),   // Right
+            (-1, 1),  // Bottom-left
+            (0, 1),   // Bottom
+            (1, 1),   // Bottom-right
+        ];
+
+        if self.index < offsets.len() {
+            let (dx, dy) = offsets[self.index];
+            self.index += 1;
+            Some(Point::new(self.center.x + dx, self.center.y + dy))
+        } else {
+            None
+        }
     }
 }
 

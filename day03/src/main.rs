@@ -1,5 +1,7 @@
 mod engine;
 mod part_nr;
+mod gear;
+mod engine_grid;
 
 use std::str::Lines;
 use common;
@@ -14,25 +16,25 @@ fn main() {
 
 fn solve_part1(lines: Lines) -> u32 {
     Engine::parse(lines)
-        .get_part_numbers()
+        .part_numbers()
         .iter()
         .map(|part_nr| part_nr.nr())
         .sum()
 }
 
-fn solve_part2(_: Lines) -> u32 {
-    0
+fn solve_part2(lines: Lines) -> u32 {
+    Engine::parse(lines)
+        .get_gears()
+        .iter()
+        .map(|gear| gear.ratio())
+        .sum()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_solve_part1()
-    {
-        // Arrange
-        let input = r#"467..114..
+    static INPUT: &str = r#"467..114..
 ...*......
 ..35..633.
 ......#...
@@ -42,10 +44,28 @@ mod tests {
 ......755.
 ...$.*....
 .664.598.."#;
+
+    #[test]
+    fn test_solve_part1()
+    {
+        // Arrange
         let expected: u32 = 4361;
 
         // Act
-        let actual: u32 = solve_part1(input.lines());
+        let actual: u32 = solve_part1(INPUT.lines());
+
+        // Assert
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_solve_part2()
+    {
+        // Arrange
+        let expected: u32 = 467835;
+
+        // Act
+        let actual: u32 = solve_part2(INPUT.lines());
 
         // Assert
         assert_eq!(actual, expected);

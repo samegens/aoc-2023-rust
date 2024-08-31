@@ -1,6 +1,6 @@
 use common::Point;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone, Eq, Hash)]
 pub struct PartNr {
     nr: u32,
     position: Point,
@@ -17,15 +17,9 @@ impl PartNr {
         self.nr
     }
 
-    pub fn position(&self) -> &Point {
-        &self.position
-    }
-
-    pub fn len(&self) -> usize {
-        self.len
-    }
-
     pub fn contains_point(&self, p: Point) -> bool {
-        p.y == self.position.y && p.y >= self.position.x && p.x < self.position.x + self.len as i64
+        p.y == self.position.y &&
+            p.x >= self.position.x &&
+            p.x < self.position.x + self.len as i64
     }
 }
