@@ -1,4 +1,5 @@
 mod engine;
+mod part_nr;
 
 use std::str::Lines;
 use common;
@@ -15,6 +16,7 @@ fn solve_part1(lines: Lines) -> u32 {
     Engine::parse(lines)
         .get_part_numbers()
         .iter()
+        .map(|part_nr| part_nr.nr())
         .sum()
 }
 

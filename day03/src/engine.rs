@@ -1,5 +1,6 @@
 use std::str::Lines;
-use common::Grid;
+use common::{Grid, Point};
+use crate::part_nr::PartNr;
 
 pub struct Engine {
     grid: Grid<char>,
@@ -15,41 +16,42 @@ impl Engine {
         Engine { grid, width , height }
     }
 
-    pub fn get_part_numbers(&self) -> Vec<u32> {
-        let mut part_numbers: Vec<u32> = Vec::new();
-        let mut is_parsing_number = false;
-        let mut current_number: u32 = 0;
+    pub fn get_part_numbers(&self) -> Vec<PartNr> {
+        let mut part_numbers: Vec<PartNr> = Vec::new();
+        let mut current_number: Option<u32> = None;
+        let mut current_pos = Point::new(0, 0);
         let mut is_adjacent_to_symbol = false;
         for y in 0..self.height {
             for x in 0..self.width {
                 let ch: &char = self.grid.at(x, y).unwrap();
                 if ch.is_digit(10) {
-                    if !is_parsing_number {
-                        current_number = ch.to_digit(10).unwrap();
+                    if current_number.is_none() {
+                        current_number = Some(ch.to_digit(10).unwrap());
+                        current_pos = Point::new(x as i64, y as i64);
                         is_adjacent_to_symbol = self.is_adjacent_to_symbol(x, y);
-                        is_parsing_number = true;
                     }
                     else {
-                        current_number *= 10;
-                        current_number += ch.to_digit(10).unwrap();
+                        let new_number = 10 * current_number.unwrap() +
+                            ch.to_digit(10).unwrap();
+                        current_number = Some(new_number);
                         is_adjacent_to_symbol = is_adjacent_to_symbol || self.is_adjacent_to_symbol(x, y);
                     }
                 }
                 else {
-                    if is_parsing_number {
+                    if let Some(nr) = current_number {
                         if is_adjacent_to_symbol {
-                            part_numbers.push(current_number);
+                            part_numbers.push(PartNr::new(nr, current_pos));
                         }
                     }
-                    is_parsing_number = false;
+                    current_number = None;
                 }
             }
-            if is_parsing_number {
+            if let Some(nr) = current_number {
                 if is_adjacent_to_symbol {
-                    part_numbers.push(current_number);
-                    is_parsing_number = false;
+                    part_numbers.push(PartNr::new(nr, current_pos));
                 }
             }
+            current_number = None;
         }
 
         part_numbers
@@ -143,10 +145,18 @@ mod tests {
 .664.598..
 "#;
         let engine = Engine::parse(engine_text.lines());
-        let expected: Vec<u32> = vec![467, 35, 633, 617, 592, 755, 664, 598];
+        let expected: Vec<PartNr> = vec![
+            PartNr::new(467, Point::new(0, 0)),
+            PartNr::new(35, Point::new(2, 2)),
+            PartNr::new(633, Point::new(6, 2)),
+            PartNr::new(617, Point::new(0, 4)),
+            PartNr::new(592, Point::new(2, 6)),
+            PartNr::new(755, Point::new(6, 7)),
+            PartNr::new(664, Point::new(1, 9)),
+            PartNr::new(598, Point::new(5, 9))];
 
         // Act
-        let actual: Vec<u32> = engine.get_part_numbers();
+        let actual: Vec<PartNr> = engine.get_part_numbers();
 
         // Assert
         assert_eq!(actual, expected);
