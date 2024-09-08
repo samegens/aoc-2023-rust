@@ -1,7 +1,9 @@
 # Advent of Code 2023 solutions in Rust
 
+[![build](https://github.com/samegens/aoc-2023-rust/actions/workflows/ci.yml/badge.svg)](https://github.com/samegens/aoc-2023-rust/actions/workflows/ci.yml)
+
 This repo is my first code using [Rust](https://www.rust-lang.org/), 
-to solve some of the problems
+to solve some of the challenges
 of [Advent of Code 2023](https://adventofcode.com/2023/).
 
 What I tried to learn:
