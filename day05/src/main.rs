@@ -1,5 +1,5 @@
 use std::str::Lines;
-use common::{split_into_blocks, InputReader};
+use common::{split_into_blocks, InputReader, Range};
 use crate::multi_range_map::MultiRangeMap;
 
 mod range_map;
@@ -11,13 +11,9 @@ fn main() {
     println!("Part 2: {}", solve_part2(input_reader.lines()));
 }
 
-fn solve_part1(lines: Lines) -> u64 {
+fn solve_part1(lines: Lines) -> i64 {
     let blocks: Vec<Vec<&str>> = split_into_blocks(lines);
-    let seeds: Vec<u64> = blocks[0][0]
-        .split_whitespace()
-        .skip(1) // Skip the "seeds:" part
-        .map(|s| s.parse().unwrap()) // Parse each number into u64
-        .collect();
+    let seeds: Vec<i64> = parse_seeds_line(blocks[0][0]);
     let multi_range_maps: Vec<MultiRangeMap> = blocks[1..]
         .iter()
         .map(|block| MultiRangeMap::parse(block))
@@ -29,13 +25,42 @@ fn solve_part1(lines: Lines) -> u64 {
         .unwrap()
 }
 
-fn solve_part2(lines: Lines) -> u64 {
-    // Engine::parse(lines)
-    //     .get_gears()
-    //     .iter()
-    //     .map(|gear| gear.ratio())
-    //     .sum()
-    0
+fn solve_part2(lines: Lines) -> i64 {
+    let blocks: Vec<Vec<&str>> = split_into_blocks(lines);
+    let seed_numbers: Vec<i64> = parse_seeds_line(blocks[0][0]);
+    let seed_ranges: Vec<Range<i64>> = seed_numbers
+        .chunks(2)
+        .map(|chunk| Range::new(chunk[0], chunk[1]))
+        .collect();
+    let multi_range_maps: Vec<MultiRangeMap> = blocks[1..]
+        .iter()
+        .map(|block| MultiRangeMap::parse(block))
+        .collect();
+    seed_ranges.into_iter()
+        .map(|seed_range| map_from_seed_to_location(seed_range, &multi_range_maps))
+        .map(|ranges| get_nearest_location(ranges))
+        .min()
+        .unwrap()
+}
+
+fn get_nearest_location(ranges: Vec<Range<i64>>) -> i64 {
+    ranges.iter()
+        .map(|range| range.start())
+        .min()
+        .unwrap()
+}
+
+fn map_from_seed_to_location(seed_range: Range<i64>, multi_range_maps: &Vec<MultiRangeMap>) -> Vec<Range<i64>> {
+    multi_range_maps.iter()
+        .fold(vec![seed_range],
+              |acc, multi_range_map| multi_range_map.map_ranges(acc))
+}
+
+pub fn parse_seeds_line(line: &str) -> Vec<i64> {
+    line.split_whitespace()
+        .skip(1) // Skip the "seeds:" part
+        .map(|s| s.parse().unwrap()) // Parse each number into i64
+        .collect()
 }
 
 #[cfg(test)]
@@ -81,25 +106,25 @@ humidity-to-location map:
     fn test_solve_part1()
     {
         // Arrange
-        let expected: u64 = 35;
+        let expected: i64 = 35;
 
         // Act
-        let actual: u64 = solve_part1(INPUT.lines());
+        let actual: i64 = solve_part1(INPUT.lines());
 
         // Assert
         assert_eq!(actual, expected);
     }
 
-    // #[test]
-    // fn test_solve_part2()
-    // {
-    //     // Arrange
-    //     let expected: u32 = 467835;
-    //
-    //     // Act
-    //     let actual: u32 = solve_part2(INPUT.lines());
-    //
-    //     // Assert
-    //     assert_eq!(actual, expected);
-    // }
+    #[test]
+    fn test_solve_part2()
+    {
+        // Arrange
+        let expected: i64 = 46;
+
+        // Act
+        let actual: i64 = solve_part2(INPUT.lines());
+
+        // Assert
+        assert_eq!(actual, expected);
+    }
 }

@@ -1,4 +1,6 @@
-#[derive(Debug, Clone, Copy, PartialEq)]
+use std::fmt;
+
+#[derive(Clone, Copy, PartialEq)]
 pub struct Range<T>
 where
     T: PartialOrd + Copy,
@@ -7,9 +9,18 @@ where
     length: T,
 }
 
+impl<T> fmt::Debug for Range<T>
+where
+    T: PartialOrd + Copy + std::ops::Add<Output = T> + fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "[{:?}..{:?})", self.start, self.start + self.length)
+    }
+}
+
 impl<T> Range<T>
 where
-    T: PartialOrd + Copy + std::ops::Add<Output = T> + std::ops::Sub<Output = T>,
+    T: PartialOrd + Copy + std::ops::Add<Output = T> + std::ops::Sub<Output = T> + Default,
 {
     pub fn new(start: T, length: T) -> Self {
         Range { start, length }
@@ -19,8 +30,16 @@ where
         self.start
     }
 
+    pub fn length(&self) -> T {
+        self.length
+    }
+
     pub fn end(&self) -> T {
         self.start + self.length
+    }
+
+    pub fn contains(&self, n: T) -> bool {
+        n >= self.start && n < self.start + self.length
     }
 
     /// Check if this range overlaps with another range.
@@ -28,44 +47,85 @@ where
         self.start < other.end() && other.start < self.end()
     }
 
-    /// Split two ranges into parts: non-overlapping and overlapping.
-    /// Returns a single vector containing the non-overlapping and overlapping parts.
+    pub fn shifted(&self, delta: T) -> Self{
+        Range { start: self.start + delta, length: self.length }
+    }
+
+    /// Split the range `self` into non-overlapping parts where the union of the parts
+    /// exactly equals the range of `self`, and any part of `other` that does not overlap
+    /// with `self` is excluded from the result.
     pub fn split(&self, other: &Range<T>) -> Vec<Range<T>> {
         let mut result = Vec::new();
 
+        // No overlap, return just the `self` range as it is
         if !self.overlaps(other) {
-            // No overlap, just return both ranges as is.
             result.push(*self);
-            result.push(*other);
             return result;
         }
 
+        // Calculate the overlap between `self` and `other`
         let overlap_start = if self.start > other.start { self.start } else { other.start };
         let overlap_end = if self.end() < other.end() { self.end() } else { other.end() };
-        let overlap_length = overlap_end - overlap_start;
-        let overlap_range = Range::new(overlap_start, overlap_length);
 
-        // Non-overlapping part before the overlap in self
+        // Add the non-overlapping part of `self` before the overlap (if any)
         if self.start < overlap_start {
             result.push(Range::new(self.start, overlap_start - self.start));
         }
 
-        // Non-overlapping part before the overlap in other
-        if other.start < overlap_start {
-            result.push(Range::new(other.start, overlap_start - other.start));
-        }
+        // Add the overlapping part
+        result.push(Range::new(overlap_start, overlap_end - overlap_start));
 
-        // Add the overlapping range
-        result.push(overlap_range);
-
-        // Non-overlapping part after the overlap in self
+        // Add the non-overlapping part of `self` after the overlap (if any)
         if overlap_end < self.end() {
             result.push(Range::new(overlap_end, self.end() - overlap_end));
         }
 
-        // Non-overlapping part after the overlap in other
-        if overlap_end < other.end() {
-            result.push(Range::new(overlap_end, other.end() - overlap_end));
+        result
+    }
+
+    /// Split the range `self` based on multiple ranges provided in `others`,
+    /// ensuring no overlapping ranges in the result, and excluding parts of `others`
+    /// that do not overlap with `self`. The union of the resulting ranges will exactly
+    /// cover `self`.
+    pub fn split_on_ranges(&self, others: Vec<Range<T>>) -> Vec<Range<T>> {
+        let mut result = Vec::new();
+
+        // Start with the full `self` range
+        let mut current_range = *self;
+
+        for other in others {
+            // If there's no overlap, continue to the next range
+            if !current_range.overlaps(&other) {
+                continue;
+            }
+
+            // Calculate the overlap
+            let overlap_start = if current_range.start > other.start {
+                current_range.start
+            } else {
+                other.start
+            };
+            let overlap_end = if current_range.end() < other.end() {
+                current_range.end()
+            } else {
+                other.end()
+            };
+
+            // Add the non-overlapping part before the overlap (if any)
+            if current_range.start < overlap_start {
+                result.push(Range::new(current_range.start, overlap_start - current_range.start));
+            }
+
+            // Add the overlapping part
+            result.push(Range::new(overlap_start, overlap_end - overlap_start));
+
+            // Update the current range to the remaining part after the overlap
+            current_range = Range::new(overlap_end, current_range.end() - overlap_end);
+        }
+
+        // Add the remaining part of `self` after processing all ranges
+        if current_range.length > T::default() {
+            result.push(current_range);
         }
 
         result
@@ -86,9 +146,8 @@ mod tests {
         let actual = range1.split(&range2);
 
         // Assert
-        assert_eq!(actual.len(), 2);
+        assert_eq!(actual.len(), 1);
         assert_eq!(actual[0], range1);
-        assert_eq!(actual[1], range2);
     }
 
     #[test]
@@ -117,10 +176,9 @@ mod tests {
         let actual = range1.split(&range2);
 
         // Assert
-        assert_eq!(actual.len(), 3);
+        assert_eq!(actual.len(), 2);
         assert_eq!(actual[0], Range::new(10, 5));
         assert_eq!(actual[1], Range::new(15, 5));
-        assert_eq!(actual[2], Range::new(20, 5));
     }
 
     #[test]
@@ -147,8 +205,28 @@ mod tests {
         let actual = range1.split(&range2);
 
         // Assert
-        assert_eq!(actual.len(), 2);
+        assert_eq!(actual.len(), 1);
         assert_eq!(actual[0], range1);
-        assert_eq!(actual[1], range2);
+    }
+
+    #[test]
+    fn test_split_on_ranges() {
+        // Arrange
+        let range_to_split = Range::new(74, 14);
+        let ranges = vec![
+            Range::new(77, 23),
+            Range::new(45, 19),
+            Range::new(64, 13)
+        ];
+        let expected = vec![
+            Range::new(74, 3),
+            Range::new(77, 11)
+        ];
+
+        // Act
+        let actual = range_to_split.split_on_ranges(ranges);
+
+        // Assert
+        assert_eq!(actual, expected);
     }
 }
