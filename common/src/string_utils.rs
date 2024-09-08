@@ -23,6 +23,12 @@ pub fn split_into_blocks(lines: Lines) -> Vec<Vec<&str>> {
     blocks
 }
 
+pub fn parse_numbers_from_string(string: &str) -> Vec<i64> {
+    string.split_whitespace()
+        .map(|s| s.parse().unwrap()) // Parse each number into i64
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
