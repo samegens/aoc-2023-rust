@@ -20,3 +20,21 @@ impl Race {
         (self.milliseconds - milliseconds) * speed
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::race::Race;
+
+    #[test]
+    fn test_get_nr_options_that_beat_record() {
+        // Arrange
+        let race = Race::new(7, 9);
+        let expected = 4;
+
+        // Act
+        let actual = race.get_nr_options_that_beat_record();
+
+        // Assert
+        assert_eq!(actual, expected);
+    }
+}

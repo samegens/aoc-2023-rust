@@ -16,8 +16,21 @@ fn solve_part1(lines: Lines) -> i64 {
         .fold(1, |acc, dist| acc * dist)
 }
 
-fn solve_part2(_: Lines) -> i64 {
-    0
+fn solve_part2(lines: Lines) -> i64 {
+    let mut lines = lines.peekable();
+    let duration = get_deflated_number(lines.next().unwrap());
+    let milliseconds = get_deflated_number(lines.next().unwrap());
+    let race = Race::new(duration, milliseconds);
+    race.get_nr_options_that_beat_record()
+}
+
+fn get_deflated_number(s: &str) -> i64 {
+    s
+        .replace(" ", "")
+        .split(':')
+        .nth(1).unwrap()
+        .parse::<i64>()
+        .unwrap()
 }
 
 fn parse_races_info(lines: Lines) -> Vec<Race> {
@@ -67,16 +80,16 @@ Distance:  9  40  200"#;
         assert_eq!(actual, expected);
     }
 
-    // #[test]
-    // fn test_solve_part2()
-    // {
-    //     // Arrange
-    //     let expected: i64 = 46;
-    //
-    //     // Act
-    //     let actual: i64 = solve_part2(INPUT.lines());
-    //
-    //     // Assert
-    //     assert_eq!(actual, expected);
-    // }
+    #[test]
+    fn test_solve_part2()
+    {
+        // Arrange
+        let expected: i64 = 71503;
+
+        // Act
+        let actual: i64 = solve_part2(INPUT.lines());
+
+        // Assert
+        assert_eq!(actual, expected);
+    }
 }
