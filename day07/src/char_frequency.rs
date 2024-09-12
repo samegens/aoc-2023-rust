@@ -1,5 +1,5 @@
 use std::cmp::Ordering;
-use crate::card::get_card_value;
+use crate::card::get_regular_card_value;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct CharFrequency {
@@ -10,6 +10,10 @@ pub struct CharFrequency {
 impl CharFrequency {
     pub fn new(ch: char, frequency: u32) -> CharFrequency {
         CharFrequency { ch, frequency }
+    }
+
+    pub fn get_char(&self) -> char {
+        self.ch
     }
 
     pub fn get_frequency(&self) -> u32 {
@@ -26,7 +30,7 @@ impl Ord for CharFrequency {
             return freq_cmp;
         }
 
-        get_card_value(other.ch).cmp(&get_card_value(self.ch))
+        get_regular_card_value(other.ch).cmp(&get_regular_card_value(self.ch))
     }
 }
 
