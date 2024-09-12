@@ -1,10 +1,12 @@
 mod hand;
 mod char_frequency;
 mod card;
+mod hand_comparer;
 
 use common::InputReader;
 use std::str::Lines;
 use crate::hand::Hand;
+use crate::hand_comparer::{HandComparer, RegularHandComparer};
 
 fn main() {
     let input_reader: InputReader = InputReader::new(7);
@@ -13,8 +15,9 @@ fn main() {
 }
 
 fn solve_part1(lines: Lines) -> i64 {
+    let comparer = RegularHandComparer {};
     let mut hand_bids: Vec<(Hand, i64)> = lines
-        .map(|line| parse_line(line))
+        .map(|line| parse_line(line, &comparer))
         .collect();
     hand_bids.sort_by(|a, b| a.0.cmp(&b.0));
     let mut score: i64 = 0;
@@ -24,9 +27,9 @@ fn solve_part1(lines: Lines) -> i64 {
     score
 }
 
-fn parse_line(line: &str) -> (Hand, i64) {
+fn parse_line<'a>(line: &str, comparer: &'a dyn HandComparer) -> (Hand<'a>, i64) {
     let parts: Vec<&str> = line.split_whitespace().collect();
-    let hand = Hand::new(parts[0]);
+    let hand = Hand::new(parts[0], comparer);
     let bid = parts[1].parse::<i64>().unwrap();
     (hand, bid)
 }

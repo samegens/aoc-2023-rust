@@ -1,7 +1,8 @@
+use crate::char_frequency::CharFrequency;
+use crate::hand_comparer::HandComparer;
 use std::cmp::Ordering;
 use std::collections::HashMap;
-use crate::card::get_card_value;
-use crate::char_frequency::CharFrequency;
+use std::fmt;
 
 #[derive(Debug, PartialEq, Eq, Ord, PartialOrd)]
 pub enum HandType {
@@ -14,24 +15,47 @@ pub enum HandType {
     FiveOfAKind,
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub struct Hand {
+pub struct Hand<'a> {
     cards: [char; 5],
-    hand_type: HandType
+    hand_type: HandType,
+    comparer: &'a dyn HandComparer
 }
 
-impl Hand {
-    pub fn new(cards: &str) -> Hand {
+impl<'a> fmt::Debug for Hand<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Hand")
+            .field("cards", &self.cards)
+            .field("hand_type", &self.hand_type)
+            .finish() // Comparer is ignored
+    }
+}
+
+impl<'a> PartialEq for Hand<'a> {
+    fn eq(&self, other: &Self) -> bool {
+        self.cards == other.cards && self.hand_type == other.hand_type
+    }
+}
+
+// Manual implementation of Eq (no extra methods needed since PartialEq already does the work)
+impl<'a> Eq for Hand<'a> {}
+
+impl<'a> Hand<'a> {
+    pub fn new(cards: &str, comparer: &'a dyn HandComparer) -> Hand<'a> {
         assert_eq!(cards.len(), 5);
         let cards = Self::str_to_cards(cards);
         Hand {
             cards,
-            hand_type: Self::get_type_from_cards(cards)
+            hand_type: Self::get_type_from_cards(cards),
+            comparer,
         }
     }
 
     pub fn get_type(&self) -> &HandType {
         &self.hand_type
+    }
+
+    pub fn get_cards(&self) -> &[char] {
+        &self.cards
     }
 
     fn str_to_cards(s: &str) -> [char; 5] {
@@ -84,30 +108,13 @@ impl Hand {
     }
 }
 
-
-impl Ord for Hand {
+impl<'a> Ord for Hand<'a> {
     fn cmp(&self, other: &Self) -> Ordering {
-        if self.cards == other.cards {
-            return Ordering::Equal;
-        }
-
-        let type_ordering = self.get_type().cmp(other.get_type());
-        if type_ordering != Ordering::Equal {
-            return type_ordering;
-        }
-
-        for i in 0..self.cards.len() {
-            let value_ordering = get_card_value(self.cards[i]).cmp(&get_card_value(other.cards[i]));
-            if value_ordering != Ordering::Equal {
-                return value_ordering;
-            }
-        }
-
-        Ordering::Equal
+        self.comparer.compare_hands(self, other)
     }
 }
 
-impl PartialOrd for Hand {
+impl<'a> PartialOrd for Hand<'a> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
@@ -115,6 +122,7 @@ impl PartialOrd for Hand {
 
 #[cfg(test)]
 mod tests {
+    use crate::hand_comparer::RegularHandComparer;
     use super::*;
 
     #[test]
@@ -154,7 +162,7 @@ mod tests {
 
     fn run_get_type_test_case(hand_text: &str, expected: HandType) {
         // Arrange
-        let hand = Hand::new(hand_text);
+        let hand = Hand::new(hand_text, &RegularHandComparer {});
 
         // Act
         let actual = hand.get_type();
@@ -166,8 +174,8 @@ mod tests {
     #[test]
     fn test_cmp() {
         // Arrange
-        let hand1 = Hand::new("KK677");
-        let hand2 = Hand::new("KTJJT");
+        let hand1 = Hand::new("KK677", &RegularHandComparer {});
+        let hand2 = Hand::new("KTJJT", &RegularHandComparer {});
         let expected = Ordering::Greater;
 
         // Act
