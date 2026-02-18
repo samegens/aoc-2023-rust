@@ -13,5 +13,8 @@ if [ "${#1}" -ne 2 ]; then
     exit 1
 fi
 
+mkdir -p day$1
+cp -Rfv day-template/* day$1
 
+echo Creating input/$1.txt
 touch input/$1.txt
